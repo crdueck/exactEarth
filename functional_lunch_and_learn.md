@@ -282,7 +282,7 @@ You can always expect a `fold` over any foldable structure to behave like
 a `fold` over a `List`. We can write this as a "law" that says
 
 ~~~ haskell
-Foldable.foldr f z xs == List.fold f z (toList xs)
+Foldable.foldr f z xs == List.foldr f z (toList xs)
 ~~~
 
 Scala doesnt directly define a `Foldable` class or trait, instead classes like
