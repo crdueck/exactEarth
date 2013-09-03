@@ -176,9 +176,9 @@ Of them, a `fold`:
 
 * always applies the same combining function to each element in the same way
 
-`foldr` has an important *Universal Property* that allows compilers to perform
-an optimization called `foldr/build` fusion to reduce the amount of allocations
-required in code that processes lists heavily.
+`foldr` also has an important *Universal Property* that allows compilers to
+perform an optimization called `foldr/build` fusion to reduce the amount of
+intermediate list allocations required in code that processes lists heavily.
 
 # Foldr
 
