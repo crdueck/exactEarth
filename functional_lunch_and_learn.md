@@ -311,8 +311,8 @@ applications.
 ## Higher Order Types
 
 First we need to understand higher order types. A good analogy are generics in
-langauges like Java and C++. They are applied to concrete types to create new
-concrete types.
+langauges like Java and C++. Higher order types are applied to concrete types to
+create new concrete types.
 
 Haskell examples
 
