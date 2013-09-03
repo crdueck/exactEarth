@@ -7,7 +7,7 @@ data List a = [] | a : List a
 
 myList :: [Int]
 myList = 1 : (2 : (3 : []))
--- or myList = [1,2,3]
+-- or myList = [1, 2, 3]
 -- or myList = [1..3]
 
 -- pattern matching
@@ -28,32 +28,50 @@ const :: a -> b -> a
 const x _ = x
 ~~~
 
-# Functional vs. Imperative Programming
+# What is Functional Programming?
 
-## Functional
+Functional programming is a style of programming that promotes the use of
 
-Functional programming encourages
+* pure functions: "mathematical" functions that depend only on their inputs, not
+the global program state.
 
-* pure functions
-* immutable data structures
-* declarative style
-* implicit recursion
+* immutable data structures: once defined, data cannot be mutated. Instead,
+a new modified copy of the data is created.
 
-## Pure Functions
+* declarative style: describe "what" the solution to a problem is, not "how" to
+do it.
 
-Pure functions refer to functions in the mathematical sense. If a function is
-pure, it is guaranteed to return the same result for the same input.
+* implicit recursion: recursion is encouraged over iteration, but higher order
+functions abstract explicit recursion away.
 
-Consider `sin(x)`. For a given input, this function will always return the same
-result. Contrast this with a function `queryCurrentPosition` which looks up the
-current position for a given MMSI. This function is likely to return different
-results every time it is called.
+# Why Use Functional Programming?
 
-The result of `sin(x)` depends only on the value of `x` which it is called with,
-but the result of `queryCurrentPosition` depends on the state of the database
-when the query is made, as well as what MMSI it is called with.
+Correct use of a functional style results in code that is easier to maintain and
+reason about.
 
-# Maps, Filters and Folds
+Functional code is often "obviously" correct and very composable due to the use
+of higher order functions (functions that take functions as arguments to change
+their behaviour).
+
+Pure functions and immutable data structures reduce the cognitive load required
+to understand a piece of code. The behaviour of a function will never depend on
+a global variable defined halfway across the code base, or the current state of
+the program. Everything a programmer needs to reason about a piece of code is
+self contained.
+
+All the code we will ever write will eventually be executed on some inherently
+procedural CPU. However, our code will also have to be modified many times over
+by other programmers to add new features, fix bugs and optimize for performance.
+
+Functional programming lets us write clear, correct code that is easy to
+maintain, while letting powerful optimizing compilers do the "busy work" of
+translating our high level code for humans to low level code for machines.
+
+# Essential Higher Order Functions
+
+There are some very frequently used higher order functions that capture common
+recursive operations over `List`. We'll see later that most of these functions
+can be generalized to work on other data structures besides `List`.
 
 ## Map
 
@@ -69,7 +87,7 @@ imperative code.
 
 ~~~ scala
 def processList(input: List[Input]) : List[Output] = {
-    var out = new List[String]()
+    var out = new List[Output]()
 
     for (data <- input) {
         out ::= processData(data)
@@ -78,7 +96,7 @@ def processList(input: List[Input]) : List[Output] = {
 }
 ~~~
 
-Now a functional version
+Now a functional version using `map`
 
 ~~~ scala
 def processList(input: List[Input]) : List[Output] = {
@@ -87,10 +105,10 @@ def processList(input: List[Input]) : List[Output] = {
 ~~~
 
 Using `map` improves code readability. It may be hard to tell what a handwritten
-for loop does at a glance, but `map` has strong guarantees.
+for loop does at a glance, but `map`:
 
-It always traverses every element, and it always applies the same function to
-each element. At the very least, using map reduces off-by-one errors.
+* always traverses each element
+* always applies the same function to each element in the same way
 
 # Filter
 
@@ -117,7 +135,7 @@ def onlyEvens(xs: List[Int]) : List[Int] = {
 }
 ~~~
 
-and a functional version
+and a functional version using `filter`
 
 ~~~ scala
 def onlyEvens(xs: List[Int]) : List[Int] = {
@@ -151,21 +169,32 @@ sum [1,2,3] = foldr (+) 0 [1,2,3]
             = 6
 ~~~
 
+Like `map`, `fold` has strong guarantees that make it easy to reason about.
+Of them, a `fold`:
+
+* always traverses each element in the collection you're folding over
+
+* always applies the same combining function to each element in the same way
+
+`foldr` has an important *Universal Property* that allows compilers to perform
+an optimization called `foldr/build` fusion to reduce the amount of allocations
+required in code that processes lists heavily.
+
 # Foldr
 
 Here's an iterative factorial function
 
 ~~~ scala
 def factorial(n: Int): Int = {
-    var res = n
-    for (x <- 1 until n) {
+    var res = 1
+    for (x <- 1 until n + 1) {
         res *= x
     }
     return res
 }
 ~~~
 
-and the functional version
+and the functional version using `foldr`
 
 ~~~ scala
 def factorial(n: Int): Int = {
@@ -227,10 +256,6 @@ foldTree :: (a -> b -> b) -> b -> Tree a -> b
 foldTree f z (Leaf a)       = f a z
 foldTree f z (Branch l a r) = f a (foldTree f (foldTree f z r) l)
 ~~~
-
-Like `map`, a `fold` always traverses every element in the collection you're
-folding over, and applies the combining function to each element in the same
-way.
 
 # Foldr
 
