@@ -91,7 +91,7 @@ map odd [1,2,3] = odd 1 : map odd [2,3]
                 = [True, False, True]
 ~~~
 
-Basically, `map` returns a new list where each element in the input list has
+Basically, `map` returns a new `List` where each element in the input `List` has
 been replaced with the result of applying the function to that element.
 
 # Map
@@ -269,7 +269,7 @@ foldr :: (a -> b -> b) -- combining function
       ->  b            -- final value
 ~~~
 
-Think of folds whenever you want to condense a `List` of "things" into a single
+Think of folds whenever you want to reduce a `List` of "things" into a single
 "thing".
 
 But `List` aren't the only things we can fold.
@@ -341,13 +341,11 @@ examples.
 zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
 
 zip :: [a] -> [b] -> [(a, b)]
--- zip == zipWith (\a -> b -> (a, b))
+-- zip == zipWith (\a b -> (a, b))
 
 unfoldr :: (b -> Maybe (a, b)) -> b -> [a]
 
 iterate :: (a -> a) -> a -> [a]
-
-find :: (a -> Bool) -> [a] -> Maybe a
 ~~~
 
 # Intermediate Functional Concepts
@@ -437,7 +435,7 @@ So our requirements for a `Functor` becomes
 a -> f a
 ~~~
 
-* associates each function `a -> b` with a function `f a -> f b` 
+* associates each function `a -> b` with a function `f a -> f b`
 
 ~~~ haskell
 (a -> b) -> (f a -> f b)
@@ -494,6 +492,16 @@ would `fmap` behave?
 
 # Functors
 
+We can think of a `Functor` as some kind of "context" around a pure value.  We
+use `fmap` to lift a function on pure values to a function on values in this
+"context", and `fmap` automagically knows what instance of `Functor` to use!
+
+Scala by default doesn't define `Functor`, instead classes like `List`, `Map`
+and `Option` define their own `map` methods that "do the right thing". These are
+exactly the same as their would-be `Functor` instances.
+
+# Functors
+
 ~~~ haskell
 data Thread r
     = Yield (Thread r)
@@ -534,7 +542,7 @@ data Thread r
 instance Functor Thread where
     fmap f (Yield next)      = Yield (fmap f next)
     fmap f (Fork left right) = Fork (fmap f left) (fmap f right)
-    fmap f (Pure r)          = ... 
+    fmap f (Pure r)          = ...
 ~~~
 
 # Functors
@@ -552,16 +560,6 @@ instance Functor Thread where
     fmap f (Fork left right) = Fork (fmap f left) (fmap f right)
     fmap f (Pure r)          = Pure (f r)
 ~~~
-
-# Functors
-
-We can think of a `Functor` as some kind of "context" around a pure value.  We
-use `fmap` to lift a function on pure values to a function on values in this
-"context", and `fmap` automagically knows what instance of `Functor` to use!
-
-Scala by default doesn't define `Functor`, instead classes like `List`, `Map`
-and `Option` define their own `map` methods that "do the right thing". These are
-exactly the same as their would-be `Functor` instances.
 
 # Monads
 
@@ -630,6 +628,7 @@ Associativity
 To make a `Monad` instance, we need two things
 
 * a function to create a monadic action that does nothing but return a value
+
 * a function to apply a monadic function to the result of a monadic action
 
 Some example `Monad` instances
@@ -666,6 +665,44 @@ instance Monad Tree where
 
 # Monads
 
+Again, Scala by default doesnt define `Monad`, instead classes like `List`,
+`Map` and `Option` define their own `flatMap` methods. These `flatMap` methods
+behave exactly like `(>>=)`.
+
+Scala does provide some nice syntactic sugar for monadic operations that is very
+similar to do notation in Haskell.
+
+~~~ scala
+for {
+    x <- List(1, 2)
+    y <- List(3, 4)
+    z = (x, y)
+} yield z
+-- List((1,3), (1,4), (2,3), (2,4))
+~~~
+
+This desugars to nested `flatMap`s
+
+~~~ scala
+List(1,2).flatMap(x => List(3,4).flatMap(y => List((x, y))))
+~~~
+
+This is a good example of the monadic effect of `List`, non-determinism! Think
+of the `List` `Monad` as a computation that doesnt know what its result might
+be, instead of operating on just one result, you operate on all possible
+results.
+
+Here is a interesting example of non-determinism in the `List` `Monad`.
+
+~~~ haskell
+filterM :: Monad m => (a -> m Bool) -> [a] -> m [a]
+powerset :: [a] -> [[a]]
+powerset xs = filterM (const [True, False]) xs
+-- powerset [1,2,3] = [[1,2,3],[1,2],[1,3],[1],[2,3],[2],[3],[]]
+~~~
+
+# Monads
+
 ~~~ haskell
 data Thread r
     = Yield (Thread r)
@@ -686,7 +723,7 @@ data Thread r
 
 instance Monad Thread where
     return r = Pure r
-    
+
     Yield next    >>= f = ...
 ~~~
 
@@ -739,50 +776,12 @@ instance Monad Thread where
 
 # Monads
 
-Again, Scala by default doesnt define `Monad`, instead classes like `List`,
-`Map` and `Option` define their own `flatMap` methods. These `flatMap` methods
-behave exactly like `(>>=)`.
-
-Scala does provide some nice syntactic sugar for monadic operations, that is
-very similar to do notation in Haskell.
-
-~~~ scala
-for {
-    x <- List(1, 2)
-    y <- List(3, 4)
-    z = (x, y)
-} yield z
--- List((1,3), (1,4), (2,3), (2,4))
-~~~
-
-This desugars to nested `flatMap`s
-
-~~~ scala
-List(1,2).flatMap(x => List(3,4).flatMap(y => List((x, y))))
-~~~
-
-This is a good example of the monadic effect of `List`, non-determinism! Think
-of the `List` `Monad` as a computation that doesnt know what its result might
-be, instead of operating on just one result, you operate on all possible
-results.
-
-Here is a interesting example of non-determinism in the `List` `Monad`.
-
-~~~ haskell
-filterM :: Monad m => (a -> m Bool) -> [a] -> m [a]
-powerset :: [a] -> [[a]]
-powerset xs = filterM (const [True, False]) xs
--- powerset [1,2,3] = [[1,2,3],[1,2],[1,3],[1],[2,3],[2],[3],[]]
-~~~
-
-# Monads
-
 `Option` is a very useful abstraction that saves us from the dreaded
 `NullPointerException`. With `Option`, we can tell the compiler "this
 computation might fail to return a result", and the compiler will make sure that
 we always handle the failure case. If we don't, the code won't compile!
 
-Making use of `Option` can prevent many, many subtle bugs.
+Making good use of `Option` can prevent many subtle bugs.
 
 ## 1
 ~~~ scala
@@ -880,19 +879,15 @@ Other `Monad`s can provide effects such as
 
 * read/write state
 
-* implicit arguments
-
 * continuations
 
 * parallelism/concurrency
-
-* threadsafe, locally impure computations (ex. direct memory access) that appear pure to the outside world
 
 * Software Transactional Memory
 
 * I/O effects
 
-* streaming resource handling
+* streaming resources
 
 * Domain Specific Languages
 
@@ -927,9 +922,6 @@ t :: (* -> *) -- a Monad
   -> *        -- we get a concrete type back
 ~~~
 
-Unlike `Monad => Functor`, there is no guarantee that a valid `MonadTrans`
-instance is a valid `Monad` instance from the typeclass definition alone.
-
 # Monad Transformers
 
 ~~~ haskell
@@ -945,7 +937,7 @@ data Thread m r
 instance Monad m => Functor (Thread m) where
     fmap f (Yield next)      = Yield (fmap f next)
     fmap f (Fork left right) = Fork (fmap f left) (fmap f right)
-    fmap f (Lift m)          = Lift (liftM (fmap f) m)
+    fmap f (Lift m)          = Lift (fmap (fmap f) m)
     fmap f (Pure r)          = Pure (f r)
     fmap f  Done             = Done
 ~~~
@@ -1024,7 +1016,7 @@ and a roundRobin thread scheduler
 
 ~~~ haskell
 roundRobin :: Monad m => Thread m a -> m ()
-roundRobin = go . singleton
+roundRobin t0 = go (singleton t0)
   where
     go ts = case viewl ts of
         -- The queue is empty: we're done!
@@ -1082,5 +1074,5 @@ Hello World
 10
 ~~~
 
-We've used our `Thread` transformer to layer `IO` effects (printing to
-stdout) with our threading effects.
+We've used our `Thread` transformer to layer `IO` effects (printing to stdout in
+this case) with our threading effects.

@@ -1,6 +1,8 @@
 import Control.Monad
 import Control.Monad.Trans
-import Data.Sequence -- Queue with O(1) head and tail operations
+import Data.Sequence -- Queue with O(1) access to first and last elements
+
+main = roundRobin mainThread
 
 data Thread m r
     = Yield   (Thread m r)
@@ -40,22 +42,22 @@ fork thread = do
     child <- Fork (Pure False) (Pure True)
     when child $ thread >> done
 
-roundRobin :: Monad m => Thread m a -> m ()
+roundRobin :: Monad m => Thread m r -> m ()
 roundRobin = go . singleton
   where
     go ts = case viewl ts of
         -- The queue is empty: we're done!
-        EmptyL   -> return ()
+        EmptyL  -> return ()
         -- The queue is non-empty: Process the first thread
         t :< ts -> case t of
             -- Yielding threads go to the back of the queue
-            Yield   t' -> go (ts |> t')
+            Yield  t' -> go (ts |> t')
             -- New threads go to the back of the queue
-            Fork t1 t2 -> go (t1 <| (ts |> t2))
+            Fork l r  -> go (l <| (ts |> r))
             -- Run effects in the base monad
-            Lift    m  -> m >>= \t' -> go (t' <| ts)
+            Lift   m  -> m >>= \t' -> go (t' <| ts)
             -- Thread done: Remove the thread from the queue
-            _          -> go ts
+            _         -> go ts
 
 mainThread :: Thread IO ()
 mainThread = do
@@ -73,5 +75,3 @@ thread2 :: Thread IO ()
 thread2 = replicateM_ 3 $ do
     lift $ putStrLn "Hello World"
     yield
-
-main = roundRobin mainThread
