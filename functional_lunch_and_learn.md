@@ -277,6 +277,7 @@ def parseMessages(msgs: List[AISMessage]) : ParseResult = {
     var result = new ParseResult()
     msgs.fold(result)((msg, res) => res += msg.parse())
 }
+~~~
 
 # Foldr
 
