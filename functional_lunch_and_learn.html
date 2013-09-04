@@ -32,6 +32,24 @@ code > span.er { color: #ff0000; font-weight: bold; }
     charset="utf-8" type="text/javascript"></script>
 </head>
 <body>
+<div class="section slide level1" id="what-is-functional-programming">
+<h1 id="what-is-functional-programming">What is Functional Programming?</h1>
+<p>Functional programming is a style of programming that encourages</p>
+<ul>
+<li><p>pure functions: &quot;mathematical&quot; functions that depend only on their inputs, not the global program/world state.</p></li>
+<li><p>immutable data structures: once defined, data cannot be mutated. Instead, a new modified copy of the data is created.</p></li>
+<li><p>declarative style: describe &quot;what&quot; the solution to a problem is, not &quot;how&quot; to do it.</p></li>
+<li><p>implicit recursion: recursion is used instead of iteration, but higher order functions (functions that take functions as arguments to change their behaviour) abstract explicit recursion away.</p></li>
+</ul>
+</div>
+<div class="section slide level1" id="why-use-functional-programming">
+<h1 id="why-use-functional-programming">Why Use Functional Programming?</h1>
+<p>Correct use of a functional style results in code that is easier to maintain and reason about.</p>
+<p>Functional code is often &quot;obviously&quot; correct and very composable and reusable due to the use of higher order functions.</p>
+<p>Pure functions and immutable data structures reduce the cognitive load required to understand a piece of code. The behaviour of a function will never depend on a global variable defined halfway across the code base, or the current state of the program. Everything a programmer needs to reason about a piece of code is self contained.</p>
+<p>All the code we will ever write will eventually be executed on some inherently procedural CPU. However, our code will also have to be modified many times over by other programmers to add new features, fix bugs and optimize for performance.</p>
+<p>Functional programming lets us write clear, correct code that is easy to maintain, while letting powerful optimizing compilers do the &quot;busy work&quot; of translating our high level code for humans to low level code for machines.</p>
+</div>
 <div class="section slide level1" id="haskell-at-a-glance">
 <h1 id="haskell-at-a-glance">Haskell at a Glance</h1>
 <pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">List</span> a <span class="fu">=</span> [] <span class="fu">|</span> a <span class="fu">:</span> <span class="dt">List</span> a
@@ -59,24 +77,6 @@ add2 <span class="fu">=</span> add3 <span class="dv">0</span>
 <span class="co">-- wildcards</span>
 <span class="fu">const</span><span class="ot"> ::</span> a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> a
 <span class="fu">const</span> x _ <span class="fu">=</span> x</code></pre>
-</div>
-<div class="section slide level1" id="what-is-functional-programming">
-<h1 id="what-is-functional-programming">What is Functional Programming?</h1>
-<p>Functional programming is a style of programming that encourages</p>
-<ul>
-<li><p>pure functions: &quot;mathematical&quot; functions that depend only on their inputs, not the global program/world state.</p></li>
-<li><p>immutable data structures: once defined, data cannot be mutated. Instead, a new modified copy of the data is created.</p></li>
-<li><p>declarative style: describe &quot;what&quot; the solution to a problem is, not &quot;how&quot; to do it.</p></li>
-<li><p>implicit recursion: recursion is used instead of iteration, but higher order functions (functions that take functions as arguments to change their behaviour) abstract explicit recursion away.</p></li>
-</ul>
-</div>
-<div class="section slide level1" id="why-use-functional-programming">
-<h1 id="why-use-functional-programming">Why Use Functional Programming?</h1>
-<p>Correct use of a functional style results in code that is easier to maintain and reason about.</p>
-<p>Functional code is often &quot;obviously&quot; correct and very composable and reusable due to the use of higher order functions.</p>
-<p>Pure functions and immutable data structures reduce the cognitive load required to understand a piece of code. The behaviour of a function will never depend on a global variable defined halfway across the code base, or the current state of the program. Everything a programmer needs to reason about a piece of code is self contained.</p>
-<p>All the code we will ever write will eventually be executed on some inherently procedural CPU. However, our code will also have to be modified many times over by other programmers to add new features, fix bugs and optimize for performance.</p>
-<p>Functional programming lets us write clear, correct code that is easy to maintain, while letting powerful optimizing compilers do the &quot;busy work&quot; of translating our high level code for humans to low level code for machines.</p>
 </div>
 <div class="section slide level1" id="essential-higher-order-functions">
 <h1 id="essential-higher-order-functions">Essential Higher Order Functions</h1>

@@ -1,33 +1,3 @@
-# Haskell at a Glance
-
-~~~ haskell
-data List a = [] | a : List a
--- []  :: List a
--- (:) :: a -> List a -> List a
-
-myList :: [Int]
-myList = 1 : (2 : (3 : []))
--- or myList = [1, 2, 3]
--- or myList = [1..3]
-
--- pattern matching
-null :: [a] -> Bool
-null []     = True
-null (x:xs) = False
-
--- curried function
-add3 :: Int -> Int -> Int -> Int
-add3 x y z = x + y + z
-
--- partially applied function
-add2 :: Int -> Int -> Int
-add2 = add3 0
-
--- wildcards
-const :: a -> b -> a
-const x _ = x
-~~~
-
 # What is Functional Programming?
 
 Functional programming is a style of programming that encourages
@@ -66,6 +36,36 @@ by other programmers to add new features, fix bugs and optimize for performance.
 Functional programming lets us write clear, correct code that is easy to
 maintain, while letting powerful optimizing compilers do the "busy work" of
 translating our high level code for humans to low level code for machines.
+
+# Haskell at a Glance
+
+~~~ haskell
+data List a = [] | a : List a
+-- []  :: List a
+-- (:) :: a -> List a -> List a
+
+myList :: [Int]
+myList = 1 : (2 : (3 : []))
+-- or myList = [1, 2, 3]
+-- or myList = [1..3]
+
+-- pattern matching
+null :: [a] -> Bool
+null []     = True
+null (x:xs) = False
+
+-- curried function
+add3 :: Int -> Int -> Int -> Int
+add3 x y z = x + y + z
+
+-- partially applied function
+add2 :: Int -> Int -> Int
+add2 = add3 0
+
+-- wildcards
+const :: a -> b -> a
+const x _ = x
+~~~
 
 # Essential Higher Order Functions
 
