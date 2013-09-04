@@ -125,6 +125,22 @@ for loop does at a glance, but `map`:
 * always traverses each element
 * always applies the same function to each element in the same way
 
+# Quick Note on Scala Anonymous Functions
+
+The following functions are all equivalent.
+
+~~~ scala
+List(1, 2, 3).map(x => x + 1)
+
+List(1, 2, 3).map(_ + 1)
+
+-- def add1(x: Int) = x + 1
+
+List(1, 2, 3).map(x => add1(x))
+
+List(1, 2, 3).map(add1)
+~~~
+
 # Filter
 
 ~~~ haskell
@@ -175,6 +191,16 @@ foldr :: (a -> b -> b) -> b -> [a] -> b
 foldr _ acc []     = acc
 foldr f acc (x:xs) = f x (foldr f acc xs)
 ~~~
+
+~~~ haskell
+foldr :: (a -> b -> b) -- combining function
+      ->  b            -- initial value
+      -> [a]           -- list of a's
+      ->  b            -- final value
+~~~
+
+Think of folds whenever you want to reduce a `List` of "things" into a single
+"thing".
 
 Lets apply `foldr` step by step to see how it works.
 
@@ -229,6 +255,29 @@ def factorial(n: Int): Int = {
 
 # Foldr
 
+Another example
+
+~~~ scala
+def parseMessages(msgs: List[AISMessage]) : ParseResult = {
+    var result = new ParseResult()
+
+    for (msg <- msgs) {
+        result += msg.parse()
+    }
+    return result
+}
+~~~
+
+and a functional version using `foldr`
+
+~~~ scala
+def parseMessages(msgs: List[AISMessage]) : ParseResult = {
+    var result = new ParseResult()
+    msgs.fold(result)((msg, res) => res += msg.parse())
+}
+
+# Foldr
+
 Many common functions are `foldr` in disguise!
 
 ~~~ haskell
@@ -257,20 +306,6 @@ map f xs = foldr (\x xs -> f x : xs) [] xs
 ~~~
 
 # Foldr
-
-What do all of these functions have in common?  They all take a `List` of
-"things" and combine them together in some way to give you one "thing" back
-(possibly of a different type).
-
-~~~ haskell
-foldr :: (a -> b -> b) -- combining function
-      ->  b            -- initial value
-      -> [a]           -- list of a's
-      ->  b            -- final value
-~~~
-
-Think of folds whenever you want to reduce a `List` of "things" into a single
-"thing".
 
 But `List` aren't the only things we can fold.
 
@@ -314,26 +349,9 @@ Scala doesnt directly define a `Foldable` class or trait, instead classes like
 `List`, `Map` and `Option` provide their own `foldRight` and `foldLeft` methods
 that behave just like `foldr` and `foldl`.
 
-# Foldr
-
-Folds also encompass a simple sort of state, as the combining function is
-applied to the result of the previous application.
-
-~~~ haskell
-foldr :: (Input -> Result -> Result) -> Result -> [Input] -> Result
-~~~
-
-Each time the function is called, it has access to the intermediate result as it
-has been computed up to that point. This intermediate result is used to compute
-the next intermediate result and so on.
-
-So, think of folds whenever you want to repeatedly apply a function to a
-collection of inputs and the function depends the result of previous
-applications.
-
 # More Recursive Primitives
 
-There are many more basic recursive functions in a functional programmers
+There are many more basic recursive functions in a functional programmer's
 arsenal. It would be time consuming to explain them all, but here are a few
 examples.
 
@@ -386,8 +404,8 @@ class Functor (f :: * -> *) where
     fmap :: (a -> b) -> (f a -> f b)
 ~~~
 
-A `Functor` is formally defined in Category Theory. Don't worry, you dont need
-to understand any of this to use `Functor`!
+A `Functor` is formally defined in category theory. Don't worry though, you'll
+never need to understand category theory to use `Functor`!
 
 Let $C$ and $D$ be categories. A `Functor` from $C$ to $D$ is a mapping that
 
