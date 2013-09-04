@@ -134,7 +134,7 @@ List(1, 2, 3).map(x => x + 1)
 
 List(1, 2, 3).map(_ + 1)
 
--- def add1(x: Int) = x + 1
+// def add1(x: Int) = x + 1
 
 List(1, 2, 3).map(x => add1(x))
 
@@ -497,6 +497,12 @@ instance Functor Maybe where
     fmap _ Nothing  = Nothing
     fmap f (Just a) = Just (f a)
 
+data Either a b = Left a | Right b
+
+instance Functor (Either a) where
+    fmap _ (Left  a) = Left a
+    fmap f (Right b) = Right (f b)
+
 data Tree a = Leaf a | Branch (Tree a) a (Tree a)
 
 instance Functor Tree where
@@ -673,6 +679,13 @@ instance Monad Maybe where
     Nothing >>= _ = Nothing
     Just a  >>= f = f a
 
+instance Monad (Either a) where
+    return b = Right b
+
+    (>>=) :: Either a b -> (b -> Either a c) -> Either a c
+    Left  a >>= _ = Left a
+    Right b >>= f = f b
+
 instance Monad Tree where
     return a = Leaf a
 
@@ -826,16 +839,19 @@ for {
 computation might fail to return a result", and the compiler will make sure that
 we always handle the failure case. If we don't, the code won't compile!
 
-Making use of `Option` can prevent many, many subtle bugs.
+You may consider using `Option` instead of `try/catch` blocks. Instead of
+throwing an exception if a computation fails (ex. establishing a database
+connection), return `None` instead and let the calling function decide how to
+handle the failure.
 
 ##1
 ~~~ scala
 for {
     x <- Some(4)
-    y <- Nothing
+    y <- None
     z = x + y
 } yield z
--- Nothing
+-- None
 ~~~
 
 ##2
@@ -857,13 +873,13 @@ entire computation should return `Nothing`.
 ~~~ scala
 def bothGrandFathers(person: Person): Option[(Person, Person)] =
     person.getFather() match {
-        case Nothing => Nothing
+        case None => None
         case Some(father) => father.getFather() match {
-          case Nothing => Nothing
+          case None => None
           case Some(grandFather1) => person.getMother() match {
-            case Nothing => Nothing
+            case None => None
             case Some(mother) => mother.getFather() match {
-              case Nothing => Nothing
+              case None => None
               case Some(grandFather1) =>
                 Some((grandFather1, grandFather2))
             }
