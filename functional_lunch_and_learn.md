@@ -220,6 +220,8 @@ sum [1,2,3] = foldr (+) 0 [1,2,3]
             = 6
 ~~~
 
+# Foldr
+
 Like `map`, `fold` has strong properties that make it easy to reason about. Of
 them, a `fold`:
 

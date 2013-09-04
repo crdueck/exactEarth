@@ -177,6 +177,9 @@ List(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</s
             <span class="fu">=</span> <span class="dv">1</span> <span class="fu">+</span> (<span class="dv">2</span> <span class="fu">+</span> <span class="dv">3</span>)
             <span class="fu">=</span> <span class="dv">1</span> <span class="fu">+</span> <span class="dv">5</span>
             <span class="fu">=</span> <span class="dv">6</span></code></pre>
+</div>
+<div class="section slide level1" id="foldr-1">
+<h1 id="foldr-1">Foldr</h1>
 <p>Like <code>map</code>, <code>fold</code> has strong properties that make it easy to reason about. Of them, a <code>fold</code>:</p>
 <ul>
 <li><p>always traverses each element in the collection you're folding over</p></li>
@@ -184,8 +187,8 @@ List(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</s
 </ul>
 <p><code>foldr</code> also has an important <em>Universal Property</em> that allows compilers to perform an optimization called <code>foldr/build</code> fusion to reduce the amount of intermediate list allocations required in code that processes lists heavily.</p>
 </div>
-<div class="section slide level1" id="foldr-1">
-<h1 id="foldr-1">Foldr</h1>
+<div class="section slide level1" id="foldr-2">
+<h1 id="foldr-2">Foldr</h1>
 <p>Here's an iterative factorial function</p>
 <pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">def</span> <span class="fu">factorial</span>(n: Int): Int = {
     <span class="kw">var</span> res = <span class="dv">1</span>
@@ -199,8 +202,8 @@ List(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</s
     (<span class="dv">1</span> until n + <span class="dv">1</span>).<span class="fu">fold</span>(<span class="dv">1</span>)(_*_)
 }</code></pre>
 </div>
-<div class="section slide level1" id="foldr-2">
-<h1 id="foldr-2">Foldr</h1>
+<div class="section slide level1" id="foldr-3">
+<h1 id="foldr-3">Foldr</h1>
 <p>Another example</p>
 <pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">def</span> <span class="fu">parseMessages</span>(msgs: List[AISMessage]) : ParseResult = {
     <span class="kw">var</span> result = <span class="kw">new</span> <span class="fu">ParseResult</span>()
@@ -213,8 +216,8 @@ List(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</s
 <p>and a functional version using <code>foldr</code></p>
 <p><sub>~</sub> scala def parseMessages(msgs: List[AISMessage]) : ParseResult = { var result = new ParseResult() msgs.fold(result)((msg, res) =&gt; res += msg.parse()) }</p>
 </div>
-<div class="section slide level1" id="foldr-3">
-<h1 id="foldr-3">Foldr</h1>
+<div class="section slide level1" id="foldr-4">
+<h1 id="foldr-4">Foldr</h1>
 <p>Many common functions are <code>foldr</code> in disguise!</p>
 <pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="fu">reverse</span><span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [a]
 <span class="fu">reverse</span> xs <span class="fu">=</span> <span class="fu">foldr</span> (\x xs <span class="ot">-&gt;</span> xs <span class="fu">++</span> [x]) [] xs
@@ -239,8 +242,8 @@ List(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</s
 <span class="fu">map</span><span class="ot"> ::</span> a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [b]
 <span class="fu">map</span> f xs <span class="fu">=</span> <span class="fu">foldr</span> (\x xs <span class="ot">-&gt;</span> f x <span class="fu">:</span> xs) [] xs</code></pre>
 </div>
-<div class="section slide level1" id="foldr-4">
-<h1 id="foldr-4">Foldr</h1>
+<div class="section slide level1" id="foldr-5">
+<h1 id="foldr-5">Foldr</h1>
 <p>But <code>List</code> aren't the only things we can fold.</p>
 <pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Tree</span> a <span class="fu">=</span> <span class="dt">Leaf</span> a <span class="fu">|</span> <span class="dt">Branch</span> (<span class="dt">Tree</span> a) a (<span class="dt">Tree</span> a)
 
@@ -248,8 +251,8 @@ List(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</s
 foldTree f z (<span class="dt">Leaf</span> a)       <span class="fu">=</span> f a z
 foldTree f z (<span class="dt">Branch</span> l a r) <span class="fu">=</span> f a (foldTree f (foldTree f z r) l)</code></pre>
 </div>
-<div class="section slide level1" id="foldr-5">
-<h1 id="foldr-5">Foldr</h1>
+<div class="section slide level1" id="foldr-6">
+<h1 id="foldr-6">Foldr</h1>
 <p>In fact, many data structures support folding operations. Haskell defines a <code>Foldable</code> typeclass.</p>
 <pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="kw">Foldable</span> f <span class="kw">where</span>
 <span class="ot">    foldr ::</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> b
