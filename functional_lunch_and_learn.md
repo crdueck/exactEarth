@@ -30,10 +30,10 @@ const x _ = x
 
 # What is Functional Programming?
 
-Functional programming is a style of programming that promotes the use of
+Functional programming is a style of programming that encourages
 
 * pure functions: "mathematical" functions that depend only on their inputs, not
-the global program state.
+the global program/world state.
 
 * immutable data structures: once defined, data cannot be mutated. Instead,
 a new modified copy of the data is created.
@@ -41,17 +41,17 @@ a new modified copy of the data is created.
 * declarative style: describe "what" the solution to a problem is, not "how" to
 do it.
 
-* implicit recursion: recursion is encouraged over iteration, but higher order
-functions abstract explicit recursion away.
+* implicit recursion: recursion is used instead of iteration, but higher order
+functions (functions that take functions as arguments to change their behaviour)
+abstract explicit recursion away.
 
 # Why Use Functional Programming?
 
 Correct use of a functional style results in code that is easier to maintain and
 reason about.
 
-Functional code is often "obviously" correct and very composable (read:
-reusable) due to the use of higher order functions (functions that take
-functions as arguments to change their behaviour).
+Functional code is often "obviously" correct and very composable and reusable
+due to the use of higher order functions.
 
 Pure functions and immutable data structures reduce the cognitive load required
 to understand a piece of code. The behaviour of a function will never depend on
@@ -91,10 +91,10 @@ map odd [1,2,3] = odd 1 : map odd [2,3]
                 = [True, False, True]
 ~~~
 
-Basically, `map` replaces each element in a list with the result of applying the
-function to that element.
+Basically, `map` returns a new list where each element in the input list has
+been replaced with the result of applying the function to that element.
 
-## Map
+# Map
 
 Suppose we have a `List` of input data. We want to process each item in some way
 and store the results in a new `List`. We might do this using the following
