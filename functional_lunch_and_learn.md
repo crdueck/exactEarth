@@ -320,8 +320,6 @@ foldTree f z (Leaf a)       = f a z
 foldTree f z (Branch l a r) = f a (foldTree f (foldTree f z r) l)
 ~~~
 
-# Foldr
-
 In fact, many data structures support folding operations. Haskell defines
 a `Foldable` typeclass.
 
@@ -383,8 +381,8 @@ Haskell examples
 Int    :: *
 []     :: * -> *
 [Int]  :: *
+Either :: * -> * -> *
 (->)   :: * -> * -> *
-a -> b :: *
 ~~~
 
 Scala examples
@@ -592,8 +590,6 @@ instance Functor Thread where
 
 > "A monad is just a monoid in the category of endofunctors, what's the problem?"
 
-`Monads` may seem complicated at first, but are really very simple
-
 ~~~ haskell
 class Functor m => Monad (m :: * -> *) where
     return :: a -> m a
@@ -605,9 +601,9 @@ class Functor m => Monad (m :: * -> *) where
     m >>= f = join (fmap f m)
 ~~~
 
-We can see from the definition that a `Monad` must also be a `Functor` Indeed,
-a `Monad` is strictly more powerful than a `Functor` because we can derive
-a `Functor` instance from any `Monad`.
+We can see from the definition that a `Monad` must also be a `Functor`. Indeed,
+a `Monad` is strictly more powerful than a `Functor` because we can derive a
+`Functor` instance from any `Monad`.
 
 ~~~ haskell
 fmap :: Monad m => (a -> b) -> (m a -> m b)
@@ -815,13 +811,11 @@ instance Monad Thread where
 computation might fail to return a result", and the compiler will make sure that
 we always handle the failure case. If we don't, the code won't compile!
 
-Making good use of `Option` can prevent many subtle bugs.
-
 ## 1
 ~~~ scala
 for {
     x <- Some(4)
-    y <- Nothing
+    y <- None
     z = x + y
 } yield z
 ~~~
@@ -841,11 +835,6 @@ for {
 `NullPointerException`. With `Option`, we can tell the compiler "this
 computation might fail to return a result", and the compiler will make sure that
 we always handle the failure case. If we don't, the code won't compile!
-
-You may consider using `Option` instead of `try/catch` blocks. Instead of
-throwing an exception if a computation fails (ex. establishing a database
-connection), return `None` instead and let the calling function decide how to
-handle the failure.
 
 ##1
 ~~~ scala
@@ -872,6 +861,11 @@ for {
 The `Option` `Monad` represents a computation that could possibly fail to return
 a result at one or more points. If any subcomputation returns `Nothing`, the
 entire computation should return `Nothing`.
+
+You may consider using `Option` instead of `try/catch` blocks. Instead of
+throwing an exception if a computation fails (ex. establishing a database
+connection), return `None` instead and let the calling function decide how to
+handle the failure.
 
 ~~~ scala
 def bothGrandFathers(person: Person): Option[(Person, Person)] =
@@ -906,9 +900,9 @@ def bothGrandFathers(person: Person): Option[(Person, Person)] = for {
 
 # Monads
 
-`Monads` are not some just some abstract Category Theory nonsense, they are
+`Monads` are not some just some abstract category theory nonsense, they are
 simply a common design pattern of sequencing effects that has been abstracted
-into a simple interface.
+into a functional interface.
 
 Other `Monad`s can provide effects such as
 
