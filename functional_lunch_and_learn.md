@@ -49,9 +49,9 @@ functions abstract explicit recursion away.
 Correct use of a functional style results in code that is easier to maintain and
 reason about.
 
-Functional code is often "obviously" correct and very composable due to the use
-of higher order functions (functions that take functions as arguments to change
-their behaviour).
+Functional code is often "obviously" correct and very composable (read:
+reusable) due to the use of higher order functions (functions that take
+functions as arguments to change their behaviour).
 
 Pure functions and immutable data structures reduce the cognitive load required
 to understand a piece of code. The behaviour of a function will never depend on
@@ -81,6 +81,21 @@ map _ []     = []
 map f (x:xs) = f x : map f xs
 ~~~
 
+Let's apply `map` step by step to see how it works.
+
+~~~ haskell
+map odd [1,2,3] = odd 1 : map odd [2,3]
+                = odd 1 : odd 2 : map odd [3]
+                = odd 1 : odd 2 : odd 3 : map odd []
+                = odd 1 : odd 2 : odd 3 : []
+                = [True, False, True]
+~~~
+
+Basically, `map` replaces each element in a list with the result of applying the
+function to that element.
+
+## Map
+
 Suppose we have a `List` of input data. We want to process each item in some way
 and store the results in a new `List`. We might do this using the following
 imperative code.
@@ -90,9 +105,9 @@ def processList(input: List[Input]) : List[Output] = {
     var out = new List[Output]()
 
     for (data <- input) {
-        out ::= processData(data)
+        out += processData(data)
     }
-    return out.reverse()
+    return out
 }
 ~~~
 
@@ -121,6 +136,16 @@ filter p (x:xs) =
        else     filter p xs
 ~~~
 
+Let apply `filter` step by step to see how it works.
+
+~~~ haskell
+filter odd [1,2,3] = 1 : filter odd [2,3]  -- 1 is odd
+                   = 1 : filter odd [3]    -- 2 is not odd
+                   = 1 : 3 : filter odd [] -- 3 is odd
+                   = 1 : 3 : []
+                   = [1, 3]
+~~~
+
 An iterative function to remove odd numbers from a `List`
 
 ~~~ scala
@@ -128,10 +153,10 @@ def onlyEvens(xs: List[Int]) : List[Int] = {
     var acc = new List[Int]()
     for (x <- xs) {
         if (x % 2 == 0) {
-            acc ::= x
+            acc += x
         }
     }
-    return acc.reverse()
+    return acc
 }
 ~~~
 
@@ -151,7 +176,7 @@ foldr _ acc []     = acc
 foldr f acc (x:xs) = f x (foldr f acc xs)
 ~~~
 
-Lets apply `foldr` step by step to see how this works.
+Lets apply `foldr` step by step to see how it works.
 
 ~~~ haskell
 sum :: [Int] -> Int
@@ -169,8 +194,8 @@ sum [1,2,3] = foldr (+) 0 [1,2,3]
             = 6
 ~~~
 
-Like `map`, `fold` has strong guarantees that make it easy to reason about.
-Of them, a `fold`:
+Like `map`, `fold` has strong properties that make it easy to reason about. Of
+them, a `fold`:
 
 * always traverses each element in the collection you're folding over
 
@@ -306,13 +331,32 @@ So, think of folds whenever you want to repeatedly apply a function to a
 collection of inputs and the function depends the result of previous
 applications.
 
+# More Recursive Primitives
+
+There are many more basic recursive functions in a functional programmers
+arsenal. It would be time consuming to explain them all, but here are a few
+examples.
+
+~~~ haskell
+zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
+
+zip :: [a] -> [b] -> [(a, b)]
+-- zip == zipWith (\a -> b -> (a, b))
+
+unfoldr :: (b -> Maybe (a, b)) -> b -> [a]
+
+iterate :: (a -> a) -> a -> [a]
+
+find :: (a -> Bool) -> [a] -> Maybe a
+~~~
+
 # Intermediate Functional Concepts
 
 ## Higher Order Types
 
-First we need to understand higher order types. A good analogy are generics in
-langauges like Java and C++. Higher order types are applied to concrete types to
-create new concrete types.
+First we need to understand higher order (or partially applied) types. A good
+analogy are generics in langauges like Java and C++. Higher order types are
+applied to concrete types to create new concrete types.
 
 Haskell examples
 
@@ -373,13 +417,13 @@ This is a very generalized mathematical definition. In practice a programming
 language is only concerned with one category: the category of types
 representable in the language (`Hask` in Haskell).
 
-In this case, objects in this category are just the types of kind `*`
+In this category, objects are just the types of kind `*`
 
 ~~~ haskell
 Int, Bool, Maybe Char, a
 ~~~
 
-and morphisms in this category are just functions.
+and morphisms are just functions.
 
 ~~~ haskell
 Int -> Bool, [a] -> Int, a -> b
@@ -408,15 +452,6 @@ class Functor (f :: * -> *) where
     fmap :: (a -> b) -> (f a -> f b)
 ~~~
 
-# Functors
-
-Let take another look at the `Functor` typeclass
-
-~~~ haskell
-class Functor (f :: * -> *) where
-    fmap :: (a -> b) -> (f a -> f b)
-~~~
-
 The definition for the `Functor` class only defines the second requirement!
 
 It seems like something is missing, until we realize the constructor for our `Functor`
@@ -434,7 +469,7 @@ instance Functor Identity where
     fmap f (Id a) = Id (f a)
 
 instance Functor [] where
-    -- looks very similar to map
+    -- looks very similar to map!
     fmap :: (a -> b) -> ([a] -> [b])
     fmap _ []     = []
     fmap f (x:xs) = f x : fmap f xs
@@ -460,44 +495,44 @@ would `fmap` behave?
 # Functors
 
 ~~~ haskell
-data Thread a r
-    = Yield a (Thread a r)
-    | Fork    (Thread a r) (Thread a r)
+data Thread r
+    = Yield (Thread r)
+    | Fork  (Thread r) (Thread r)
     | Pure  r
 ~~~
 
 ~~~ haskell
-instance Functor (Thread a) where
-    fmap f (Yield a next)    = ...
+instance Functor Thread where
+    fmap f (Yield next)      = ...
 ~~~
 
 # Functors
 
 ~~~ haskell
-data Thread a r
-    = Yield a (Thread a r)
-    | Fork    (Thread a r) (Thread a r)
+data Thread r
+    = Yield (Thread r)
+    | Fork  (Thread r) (Thread r)
     | Pure  r
 ~~~
 
 ~~~ haskell
-instance Functor (Thread a) where
-    fmap f (Yield a next)    = Yield a (fmap f next)
+instance Functor Thread where
+    fmap f (Yield next)      = Yield (fmap f next)
     fmap f (Fork left right) = ...
 ~~~
 
 # Functors
 
 ~~~ haskell
-data Thread a r
-    = Yield a (Thread a r)
-    | Fork    (Thread a r) (Thread a r)
+data Thread r
+    = Yield (Thread r)
+    | Fork  (Thread r) (Thread r)
     | Pure  r
 ~~~
 
 ~~~ haskell
-instance Functor (Thread a) where
-    fmap f (Yield a next)    = Yield a (fmap f next)
+instance Functor Thread where
+    fmap f (Yield next)      = Yield (fmap f next)
     fmap f (Fork left right) = Fork (fmap f left) (fmap f right)
     fmap f (Pure r)          = ... 
 ~~~
@@ -505,15 +540,15 @@ instance Functor (Thread a) where
 # Functors
 
 ~~~ haskell
-data Thread a r
-    = Yield a (Thread a r)
-    | Fork    (Thread a r) (Thread a r)
+data Thread r
+    = Yield (Thread r)
+    | Fork  (Thread r) (Thread r)
     | Pure  r
 ~~~
 
 ~~~ haskell
-instance Functor (Thread a) where
-    fmap f (Yield a next)    = Yield a (fmap f next)
+instance Functor Thread where
+    fmap f (Yield next)      = Yield (fmap f next)
     fmap f (Fork left right) = Fork (fmap f left) (fmap f right)
     fmap f (Pure r)          = Pure (f r)
 ~~~
@@ -545,9 +580,9 @@ class Functor m => Monad (m :: * -> *) where
     m >>= f = join (fmap f m)
 ~~~
 
-We can see from the definition that all `Monads` are `Functors`.
-Indeed, a `Monad` is strictly more powerful than a `Functor` because
-we can derive a `Functor` instance from any `Monad`.
+We can see from the definition that a `Monad` must also be a `Functor` Indeed,
+a `Monad` is strictly more powerful than a `Functor` because we can derive
+a `Functor` instance from any `Monad`.
 
 ~~~ haskell
 fmap :: Monad m => (a -> b) -> (m a -> m b)
@@ -592,7 +627,7 @@ Associativity
 
 # Monads
 
-To make a `Monad`, we need two things
+To make a `Monad` instance, we need two things
 
 * a function to create a monadic action that does nothing but return a value
 * a function to apply a monadic function to the result of a monadic action
@@ -609,6 +644,7 @@ instance Monad Identity where
 
 instance Monad List where
     return a = [a]
+    join xs = concat xs
 
     (>>=) :: [a] -> (a -> [b]) -> [b]
     xs >>= f = concat (map f xs)
@@ -841,14 +877,23 @@ into a simple interface.
 Other `Monad`s can provide effects such as
 
 * read-only/write-only state
+
 * read/write state
+
 * implicit arguments
+
 * continuations
+
 * parallelism/concurrency
+
 * threadsafe, locally impure computations (ex. direct memory access) that appear pure to the outside world
+
 * Software Transactional Memory
+
 * I/O effects
+
 * streaming resource handling
+
 * Domain Specific Languages
 
 # Monad Transformers
@@ -884,19 +929,6 @@ t :: (* -> *) -- a Monad
 
 Unlike `Monad => Functor`, there is no guarantee that a valid `MonadTrans`
 instance is a valid `Monad` instance from the typeclass definition alone.
-
-# Monad Transformers
-
-`MonadTrans` allows us to layer monadic effects together. In Haskell `IO` is
-a monad that allows for IO effects like reading/writing files, outputing to
-stdout, or using a database connection.
-
-~~~ haskell
-MaybeT IO Char
-~~~
-
-This type could represent an `IO` computation that might not return a result,
-like a database lookup.
 
 # Monad Transformers
 
@@ -973,7 +1005,7 @@ instance MonadTrans (Thread a) where
 # Monad Transformers
 
 In the few lines of code in the last slide, we've created a fully usable
-co-operative thread implementation. All we need are a few smart constructors.
+co-operative thread DSL. All we need are a few smart constructors.
 
 ~~~ haskell
 yield :: Monad m => Thread m ()
