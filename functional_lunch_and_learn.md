@@ -1,3 +1,7 @@
+# Functional Programming:
+
+## Come for the sandwiches, stay for the functions
+
 # What is Functional Programming?
 
 Functional programming is a style of programming that encourages
