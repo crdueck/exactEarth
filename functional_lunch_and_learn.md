@@ -712,7 +712,7 @@ for {
     y <- List(3, 4)
     z = (x, y)
 } yield z
--- List((1,3), (1,4), (2,3), (2,4))
+// List((1,3), (1,4), (2,3), (2,4))
 ~~~
 
 This desugars to nested `flatMap`s
@@ -847,7 +847,7 @@ for {
     y <- None
     z = x + y
 } yield z
--- None
+// None
 ~~~
 
 ##2
@@ -857,7 +857,7 @@ for {
     y <- Some(5)
     z = x + y
 } yield z
--- Some(9)
+// Some(9)
 ~~~
 
 # Monads
@@ -902,7 +902,309 @@ def bothGrandFathers(person: Person): Option[(Person, Person)] = for {
 } yield (grandFather1, grandFather2)
 ~~~
 
-# Monads
+# ARCFilter
+
+ARCFilter is an important component of the ARC project that makes use of `Monad`s.
+Some background:
+
+* We'd like to be able to run a series of processing and filtering utilities on
+our AIS data as it passes through ARC. ie. IMF, PV, other
+
+* Each component receives some input, processes it and outputs to the next process.
+
+* Might call outside code (IMF C++ code, PVDaemon) that could throw an error,
+hang on a database connection or any other nasty real world exceptions that we'd
+like to be able to protect ourselves from.
+
+* Should be simple, flexible and allow new components to be easily added to any
+given processing pipeline.
+
+# ARCFilter
+
+So, lets think about how we'd go about implementing this. We need to be able to
+compose these filters together, such that the output of one becomes the input of
+the next filter in the chain.
+
+~~~haskell
+(.) :: (b -> c) -> (a -> b) -> a -> c
+f . g = \a -> f (g a)
+~~~
+
+Since this is a talk on functional programming, lets try modeling it as a function!
+We already know functions compose nicely, with the behaviour we want.
+
+~~~scala
+trait ARCFilter[A, B] {
+    def apply(x: A): B
+}
+~~~
+
+This is nice, but...
+
+# ARCFilter
+
+The type signature of our apply method says "for any A you give me, I'll always
+give you a B in return". But our filters have to deal with exceptions,
+misbehaving external code or other nasty things, so we'd like to give these
+filters the ability to either succeed in processing some data or fail with an
+error.
+
+Luckily, the Scala standard library includes `Try` which does exactly that. `Try` is
+a trait that is subclassed by `Success` and `Failure`.
+
+Its essentially `Either`, just with some additional semantics attached to `Left`
+and `Right`. Alternatively, its like `Option` but with additional information
+about the error stuffed inside the `None` case.
+
+~~~scala
+trait ARCFilter[A, B] {
+    def apply(x: A): Try[B]
+}
+~~~
+
+An example using `Try`
+
+~~~scala
+def onlyEven(x: Int): Try[Int] =
+    if (x % 2 == 0) Success(x)
+    else Failure(new Exception("not even!"))
+~~~
+
+# ARCFilter
+
+Now, `Try` is a `Monad`. We're not going to worry about that just yet, but we
+are going to use its `flatMap` method, which is a monadic bind, to give us the
+ability to compose `ARCFilter`s together.
+
+~~~scala
+trait ARCFilter[A, B] { self =>
+    def apply(x: A): Try[B]
+
+    def pipeTo[C](next: ARCFilter[B, C]): ARCFilter[A, C] = {
+        new ARCFilter[A, C] = {
+            def apply(x: A): Try[C] = {
+                self(x) flatMap next.apply
+            }
+        }
+    }
+}
+~~~
+
+# ARCFilter
+
+Let's see how this all works so far:
+
+~~~scala
+
+case object NotEven extends Exception
+case object NotLessThanTen extends Exception
+
+val onlyEvens = new ARCFilter[Int, Int] = {
+    def apply(x: Int): Try[Int] = {
+        if (x % 2 == 0) Success(x)
+        else Failure(NotEven)
+    }
+}
+
+val lessThanTen = new ARCFilter[Int, Int] = {
+    def apply(x: Int): Try[Int] = {
+        if (x < 10) Success(x)
+        else Failure(NotLessThanTen)
+    }
+}
+
+val combined = onlyEvens.pipeTo(lessThanTen)
+combined(3)  // Failure(NotEven)
+combined(12) // Failure(NotLessThanTen)
+combined(8)  // Success(8)
+~~~
+
+# ARCFilter
+
+As an added bonus, the type of `pipeTo` guarantees that `ARCFilter`s are composed
+correctly.
+
+~~~scala
+val bad = new ARCFilter[Boolean, Char] = {
+    def apply(x: Boolean): Try[Char] = {
+        if (x) Success("t")
+        else Failure("f")
+    }
+}
+
+bad.pipeTo(onlyEvens) // won't compile!
+~~~
+
+# ARCFilter
+
+In fact, `ARCFilter` is a monad. Here is its `flatMap` method
+
+~~~scala
+trait ARCFilter[A, B] { self =>
+    def flatMap(f: B => ARCFilter[A, C]): ARCFilter[A, C] = {
+        new ARCFilter[A, C] {
+            def apply(x: A): Try[C] = {
+                self(x) flatMap { b: B => f(b).apply(x) }
+            }
+        }
+    }
+}
+~~~
+
+`ARCFilter` forms what is known as a `Kleisli` arrow. Simplified, a `Kleisli`
+arrow is a function from pure values to monadic values, or in Haskell:
+
+~~~haskell
+type Kleisli m a b = Monad m => a -> m b
+~~~
+
+`Kleisli` gives us a way to compose functions that return `Monad`s.
+
+Our `pipeTo` function is simply composition in the `Kleisli` category.
+
+~~~haskell
+class Category (cat :: * -> * -> *) where
+    id  :: cat a a
+    (.) :: cat b c -> cat a b -> cat a c
+~~~
+
+# ARCFilter
+
+Let's take a look at the full definition for `ARCFilter`:
+
+~~~scala
+trait ARCFilter[A, B] { self =>
+    def apply(x: A): Try[B]
+
+    def pipeTo[C](next: ARCFilter[B, C]): ARCFilter[A, C] = {
+        new ARCFilter[A, C] = {
+            def apply(x: A): Try[C] = {
+                self(x) flatMap next.apply
+            }
+        }
+    }
+
+    def flatMap(f: B => ARCFilter[A, C]): ARCFilter[A, C] = {
+        new ARCFilter[A, C] {
+            def apply(x: A): Try[C] = {
+                self(x) flatMap { b: B => f(b).apply(x) }
+            }
+        }
+    }
+}
+~~~
+
+Note that we never use anything specific to `Try`: we never pattern match, call
+methods specific to `Try` or or otherwise use the knowledge that we're dealing
+with `Try`. In fact, the only method of `Try` that we ever use is `flatMap`,
+which we know to be the monadic bind.
+
+# ARCFilter
+
+`Try` gives our `ARCFilter` error handling abilities, but suppose we wanted some
+other ability instead. For example, for an `ARCFilter` to return multiple
+outputs. Well, `List` gives us this ability, so we could write:
+
+~~~scala
+trait ARCFilterList[A, B] { self =>
+    def apply(x: A): List[B]
+
+    def pipeTo[C](next: ARCFilterList[B, C]): ARCFilterList[A, C] = {
+        new ARCFilterList[A, C] = {
+            def apply(x: A): List[C] = {
+                self(x) flatMap next.apply
+            }
+        }
+    }
+
+    def flatMap(f: B => ARCFilterList[A, C]): ARCFilterList[A, C] = {
+        new ARCFilterList[A, C] {
+            def apply(x: A): List[C] = {
+                self(x) flatMap { b: B => f(b).apply(x) }
+            }
+        }
+    }
+}
+~~~
+
+This is exactly the same as `ARCFilter`, we've just replaced `Try` with `List`,
+and given it a new name. That's a lot of redundant code! Again, we never use
+the knowledge we're working with `List`, just the `flatMap` method.
+
+# ARCFilter
+
+Here's an example of the new `ARCFilterList`:
+
+~~~scala
+val factors = new ARCFilterList[Int, Int] = {
+    def apply(x: Int): List[Int] = factor(x)
+}
+
+val totient = new ARCFilterList[Int, Int] = {
+    def apply(x: Int): List[Int] = phi(x)
+}
+
+factors(6) // List(1, 2, 3)
+totient(1) // List(1)
+totient(2) // List(1)
+totient(3) // List(1, 2)
+
+val combined = factors.pipeTo(totient)
+
+combined(6) // List(1, 1, 1, 2)
+~~~
+
+# ARCFilter
+
+We'd like to reduce the code duplication here. We don't really need to know what
+type of output we're dealing with, so long as it has a `flatMap` method. It
+would be nice to be able to write:
+
+~~~scala
+trait ARCFilter[M[_], A, B] { self =>
+    def apply(x: A): M[B]
+
+    def pipeTo[C](next: ARCFilter[M[_], B, C]): ARCFilter[M[_], A, C] = {
+        new ARCFilter[M[_], A, C] = {
+            def apply(x: A): M[C] = {
+                self(x) flatMap next.apply
+            }
+        }
+    }
+
+    def flatMap(f: B => ARCFilter[M[_], A, C]): ARCFilter[M[_], A, C] = {
+        new ARCFilter[M[_], A, C] {
+            def apply(x: A): M[C] = {
+                self(x) flatMap { b: B => f(b).apply(x) }
+            }
+        }
+    }
+}
+~~~
+
+Unfortunately, Scala won't let us write that, as the compiler can't prove that
+whatever `M` is provides a `flatMap` method.
+
+# ARCFilter
+
+We've arrived at the motivation for the `Monad` typeclass.
+
+~~~haskell
+class Function m => Monad m where
+    return :: a -> m a
+    (>>=) :: m a -> (a -> m b) -> m b
+~~~
+
+If Scala had some support for typeclasses (it can in theory, but you must go
+through a great deal of blood, sweat and implicit higher-order traits in order
+to achieve the same effects. See scalaz) we could write `ARCFilter` the way we
+desire.
+
+`Monad` is simply an interface that provides two functions `return` and
+`(>>=)`/`flatMap`. Its most commonly used to reduce the code duplication
+we saw above in `ARCFilter`/`ARCFilterList`
+
+# ARCFilter
 
 `Monads` are not some just some abstract category theory nonsense, they are
 simply a common design pattern of sequencing effects that has been abstracted
@@ -925,6 +1227,8 @@ Other `Monad`s can provide effects such as
 * streaming resources
 
 * Domain Specific Languages
+
+
 
 # Monad Transformers
 
@@ -972,7 +1276,7 @@ data Thread m r
 instance Monad m => Functor (Thread m) where
     fmap f (Yield next)      = Yield (fmap f next)
     fmap f (Fork left right) = Fork (fmap f left) (fmap f right)
-    fmap f (Lift m)          = Lift (fmap (fmap f) m)
+    fmap f (Lift m)          = Lift (liftM (fmap f) m)
     fmap f (Pure r)          = Pure (f r)
     fmap f  Done             = Done
 ~~~
