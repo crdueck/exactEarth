@@ -1206,6 +1206,26 @@ we saw above in `ARCFilter`/`ARCFilterList`
 
 # ARCFilter
 
+We can compose `ARCFilter`s by hand, but it'd be nice to be able to compose an
+arbitrary number of filters. Something along the lines of
+
+~~~scala
+buildMany[C, D ... N](fst: ARCFilter[B, C], snd: ARCFilter[C, D] ...): ARCFilter[A, N]
+~~~
+
+but this is impractical. Because Scala is strongly typed, we'd need to know the
+types of every filter we want to compose in advance. Fortunately we can still
+achieve our original goal, just modified slightly.
+
+# ARCFilter
+
+If we restrict our filters to type `ARCFilter[A, A]`, that is, the output and
+input have the same type, then we have whats known as a `Monoid`. A `Monoid` is
+essentially a group, with an associative binary operation and an identity
+element.
+
+# ARCFilter
+
 `Monads` are not some just some abstract category theory nonsense, they are
 simply a common design pattern of sequencing effects that has been abstracted
 into a functional interface.
