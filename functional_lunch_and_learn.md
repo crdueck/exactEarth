@@ -1224,6 +1224,29 @@ input have the same type, then we have whats known as a `Monoid`. A `Monoid` is
 essentially a group, with an associative binary operation and an identity
 element.
 
+We can define the identity filter as a filter that always succeeds and does no
+work on its input and we've already defined our associative binary operation.
+
+~~~scala
+object ARCFilter {
+    def Identity[A] = new ARCFilter[A, A] {
+        def apply(x: A): Try[A] = Success(x)
+    }
+}
+~~~
+
+Now we can define an interface for building pipelines
+
+~~~scala
+trait PipelineBuilder[A] {
+    def build(xs: Seq[ARCFilter[A, A]): ARCFilter[A, A] = {
+        xs.foldLeft(ARCFilter.Identitiy[A]) {
+            case (z, x) => z.pipeTo(x)
+        }
+    }
+}
+~~~
+
 # ARCFilter
 
 `Monads` are not some just some abstract category theory nonsense, they are
@@ -1247,8 +1270,6 @@ Other `Monad`s can provide effects such as
 * streaming resources
 
 * Domain Specific Languages
-
-
 
 # Monad Transformers
 
