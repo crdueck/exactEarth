@@ -300,7 +300,7 @@ concat :: [[a]] -> [a]
 concat xs = foldr (++) [] xs
 
 append :: [a] -> [a] -> [a]
-append xs = foldr (:) [] xs
+append xs ys = foldr (:) ys xs
 
 all :: [Bool] -> Bool
 all xs = foldr (&&) True xs
