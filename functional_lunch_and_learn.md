@@ -233,10 +233,6 @@ them, a `fold`:
 
 * always applies the same combining function to each element in the same way
 
-`foldr` also has an important *Universal Property* that allows compilers to
-perform an optimization called `foldr/build` fusion to reduce the amount of
-intermediate list allocations required in code that processes lists heavily.
-
 # Foldr
 
 Here's an iterative factorial function
@@ -313,6 +309,49 @@ filter p xs = foldr (\x xs -> if p x then x : xs else xs) [] xs
 
 map :: a -> b -> [a] -> [b]
 map f xs = foldr (\x xs -> f x : xs) [] xs
+~~~
+
+# Foldr
+It's no coincidence that so many functions can be written in terms of `foldr`.
+In fact, `foldr` elegantly captures a fundamental form of recursion called
+the *Universal Property*. Not only does this property allow many functions to
+be written as `foldr`, but it provides an extremely powerful compiler
+optimization called `foldr/build` stream fusion that reduces the amount of
+intermediate list allocations required in code that processes lists in a
+typical compositional functional style.
+
+For educational purposes, the crux of `foldr/build` fusion is show below:
+
+~~~haskell
+build :: (forall b. (a -> b -> b) -> b -> b) -> [a]
+build g = g (:) []
+
+-- foldr/build fusion
+foldr c n (build g) <=> g c n
+~~~
+
+# Foldr
+
+~~~haskell
+sum' = foldr (+) 0
+
+map' f xs = build (\cons nil -> foldr (mapFB cons f) nil xs)
+
+mapFB :: (a -> b -> b) -> (c -> a) -> c -> b -> b
+mapFB cons f = \x ys -> cons (f x) ys
+~~~
+
+We can walk through the optimization step by step
+
+~~~haskell
+sum' (map' f xs)
+    -- inline sum', map'
+    = foldr (+) 0 (build (\cons nil -> foldr (mapFB cons f) nil xs)
+    -- apply foldr/build fusion: foldr c n (build g) <=> g c n
+    = (\cons nil -> foldr (mapFB cons f) nil xs) (+) 0
+    -- alpha reduce
+    = foldr (mapFB (+) f) 0 xs
+    -- fusion will continue if xs is defined in terms of build
 ~~~
 
 # Foldr
