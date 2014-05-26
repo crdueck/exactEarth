@@ -244,7 +244,7 @@ Here's an iterative factorial function
 ~~~ scala
 def factorial(n: Int): Int = {
     var res = 1
-    for (x <- 1 until n + 1) {
+    for (x <- 1 to n) {
         res *= x
     }
     return res
@@ -255,7 +255,7 @@ and the functional version using `foldr`
 
 ~~~ scala
 def factorial(n: Int): Int = {
-    (1 until n + 1).fold(1)(_*_)
+    (1 to n).fold(1)(_*_)
 }
 ~~~
 
