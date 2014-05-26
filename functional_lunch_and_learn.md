@@ -299,6 +299,9 @@ maximum (x:xs) = foldr max x xs
 concat :: [[a]] -> [a]
 concat xs = foldr (++) [] xs
 
+append :: [a] -> [a] -> [a]
+append xs = foldr (:) [] xs
+
 all :: [Bool] -> Bool
 all xs = foldr (&&) True xs
 
