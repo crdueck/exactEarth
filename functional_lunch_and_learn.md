@@ -636,6 +636,74 @@ instance Functor Thread where
 
 > "A monad is just a monoid in the category of endofunctors, what's the problem?"
 
+A motivation for `Monad`, from python!
+
+# Monads
+
+~~~python
+f_obj = open("foo.txt", 'r') # IO FileObject
+lines = readLines(f_obj)     # FileObject -> IO [String]
+~~~
+
+We need some kind of _sequencing_ function...
+
+# Monads
+
+~~~python
+f_obj = open("foo.txt", 'r') # IO FileObject
+lines = readLines(f_obj)     # FileObject -> IO [String]
+# ??? :: IO FileObject -> (FileObject -> IO [String]) -> IO String
+~~~
+
+We need some kind of _sequencing_ function...
+
+# Monads
+
+~~~python
+# getParams :: String -> [Param]
+def getParams(param):
+   if param == "VOL":
+       return [Vol(), VolIndex(), VolImplied()]
+   if param == "DIV":
+       return [Div(), DivSchedule()]
+   elif:
+       pass # etc..
+
+params = ["Vol", "Div"]       # [String]
+paramObjs = getParams(params) # String -> [Param]
+# ??? :: [String] -> (String -> [Param]) -> [Param]
+~~~
+
+We need some kind of _sequencing_ function...
+
+# Monads
+~~~scala
+def getFather(person: Person): Option Person 
+def getMother(person: Person): Option Person
+
+father = getFather(person)      # Option Person
+grandmother = getMother(father) # Person -> Option Person
+# ??? :: Option Person -> (Person -> Option Person) -> Option Person
+~~~
+
+We need some kind of _sequencing_ function...
+
+# Monads
+
+These sequencing functions all look *very* similar
+~~~haskell
+??? :: IO FileObject -> (FileObject -> IO [String]) -> IO String
+??? :: [String] -> (String -> [Param]) -> [Param]
+??? :: Option Person -> (Person -> Option Person) -> Option Person
+~~~
+
+Lets abstract away the minor differences
+~~~haskell
+bind :: m a -> (a -> m b) -> m b
+~~~
+
+You just invented `Monad`!
+
 ~~~ haskell
 class Functor m => Monad (m :: * -> *) where
     return :: a -> m a
