@@ -1,6 +1,4 @@
-# Functional Programming:
-
-## Come for the sandwiches, stay for the functions
+# Functional Programming
 
 # What is Functional Programming?
 
